@@ -2,12 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { InputGroup } from './components/InputGroup';
 import { MetricCard } from './components/MetricCard';
 import { DonutChart } from './components/DonutChart';
-import { EmbedModal } from './components/EmbedModal';
 import { DEFAULT_INPUTS, DEFAULT_CURRENCY, CHART_COLORS } from './constants';
 import { calculateMetrics, formatCurrency, formatPercent } from './utils/calculations';
 import { analyzeProfitability } from './services/geminiService';
 import { CalculatorInputs, CalculatorResults, Currency, AIAnalysisResponse } from './types';
-import { BarChart2, TrendingUp, BrainCircuit, Moon, Sun, Filter, Users, PackageCheck, Code, Download } from 'lucide-react';
+import { BarChart2, TrendingUp, BrainCircuit, Moon, Sun, Filter, Users, PackageCheck } from 'lucide-react';
 
 const App: React.FC = () => {
   const [inputs, setInputs] = useState<CalculatorInputs>(DEFAULT_INPUTS);
@@ -15,7 +14,6 @@ const App: React.FC = () => {
   const [currency, setCurrency] = useState<Currency>(DEFAULT_CURRENCY);
   const [activeTab, setActiveTab] = useState<'input' | 'analysis'>('input');
   const [darkMode, setDarkMode] = useState(false);
-  const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
   
   // AI State
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResponse | null>(null);
@@ -63,7 +61,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 pb-24 transition-colors duration-200">
-      <EmbedModal isOpen={isEmbedModalOpen} onClose={() => setIsEmbedModalOpen(false)} />
       
       {/* Header */}
       <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10 shadow-sm transition-colors duration-200">
@@ -78,15 +75,6 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            <button
-               onClick={() => setIsEmbedModalOpen(true)}
-               className="flex items-center gap-2 text-sm font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors border border-indigo-200 dark:border-indigo-800"
-               title="Get Embed Code for Website"
-            >
-              <Code className="w-4 h-4" />
-              <span className="hidden md:inline">Get Widget Code</span>
-            </button>
-
              <button 
               onClick={() => setDarkMode(!darkMode)}
               className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"

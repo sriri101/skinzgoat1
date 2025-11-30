@@ -24,7 +24,7 @@ export const EmbedModal: React.FC<EmbedModalProps> = ({ isOpen, onClose }) => {
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]">
         
         <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white">Embed Code</h3>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white">Embed Calculator</h3>
           <button onClick={onClose} className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
             <X className="w-5 h-5" />
           </button>
@@ -32,11 +32,11 @@ export const EmbedModal: React.FC<EmbedModalProps> = ({ isOpen, onClose }) => {
 
         <div className="p-6 overflow-y-auto">
           <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-            Copy the code below and paste it into an <strong>HTML Widget</strong> (Elementor, WordPress, Shopify) to display the calculator on your site.
+            Copy the <strong>Iframe code</strong> below and paste it into your website (WordPress HTML Block, Elementor HTML Widget, or Shopify Custom Liquid).
           </p>
           
           <div className="relative group">
-            <pre className="bg-slate-950 text-slate-300 p-4 rounded-lg text-xs font-mono overflow-x-auto h-64 border border-slate-800">
+            <pre className="bg-slate-950 text-slate-300 p-4 rounded-lg text-xs font-mono overflow-x-auto h-40 border border-slate-800 whitespace-pre-wrap break-all">
               {code}
             </pre>
             <button 
@@ -48,8 +48,19 @@ export const EmbedModal: React.FC<EmbedModalProps> = ({ isOpen, onClose }) => {
             </button>
           </div>
           
-          <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-800 dark:text-amber-200">
-            <strong>Tip:</strong> You can adjust the width and height by changing the <code>style="width: 100%; min-height: 800px;"</code> part in the first line of the code.
+          <div className="mt-6 space-y-3">
+             <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs text-indigo-800 dark:text-indigo-200">
+              <strong>WordPress/Elementor Instructions:</strong>
+              <ol className="list-decimal list-inside mt-1 ml-1 space-y-1">
+                <li>Add an <strong>HTML Widget</strong> to your page.</li>
+                <li>Paste the code above into the widget.</li>
+                <li>Update/Publish the page.</li>
+              </ol>
+            </div>
+            
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              * You can adjust the <code>height="900"</code> value in the code if you need the calculator to be taller or shorter on your specific page.
+            </div>
           </div>
         </div>
 
