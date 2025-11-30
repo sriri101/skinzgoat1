@@ -1,3 +1,4 @@
+
 import { CalculatorInputs, Currency } from './types';
 
 export const DEFAULT_INPUTS: CalculatorInputs = {
@@ -10,6 +11,10 @@ export const DEFAULT_INPUTS: CalculatorInputs = {
   deliveredPercentage: 70,
   costPerLead: 0,
   confirmationPercentage: 70,
+  
+  upsellSellingPrice: 0,
+  upsellProductCost: 0,
+  upsellTakeRate: 0,
 };
 
 export const DEFAULT_CURRENCY = Currency.MAD;

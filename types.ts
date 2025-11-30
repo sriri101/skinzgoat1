@@ -1,3 +1,4 @@
+
 export interface CalculatorInputs {
   sellingPrice: number;
   productCost: number;
@@ -8,6 +9,11 @@ export interface CalculatorInputs {
   deliveredPercentage: number;
   costPerLead: number;
   confirmationPercentage: number;
+  
+  // Upsell Inputs
+  upsellSellingPrice: number;
+  upsellProductCost: number;
+  upsellTakeRate: number; // Percentage 0-100
 }
 
 export interface CalculatorResults {
@@ -26,6 +32,15 @@ export interface CalculatorResults {
   deliveredOrders: number;
   rtoOrders: number;
   breakEvenROAS: number;
+  averageOrderValue: number;
+}
+
+export interface GoalMetrics {
+  requiredOrders: number;
+  requiredLeads: number;
+  requiredAdSpend: number;
+  isAchievable: boolean;
+  unitProfit: number;
 }
 
 export enum Currency {
