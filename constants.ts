@@ -1,15 +1,15 @@
 import { CalculatorInputs, Currency } from './types';
 
 export const DEFAULT_INPUTS: CalculatorInputs = {
-  sellingPrice: 400,
-  productCost: 100,
-  shippingForward: 30,
+  sellingPrice: 0,
+  productCost: 0,
+  shippingForward: 0,
   shippingRTO: 0,
-  miscCost: 10,
-  totalAdSpend: 5000,
+  miscCost: 0,
+  totalAdSpend: 0,
   deliveredPercentage: 70,
-  costPerLead: 15,
-  confirmationPercentage: 50,
+  costPerLead: 0,
+  confirmationPercentage: 70,
 };
 
 export const DEFAULT_CURRENCY = Currency.MAD;

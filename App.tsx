@@ -70,7 +70,7 @@ const App: React.FC = () => {
               <BarChart2 className="w-5 h-5 text-white" />
             </div>
             <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400">
-              COD Profit Calc
+              GoatCalculator
             </h1>
           </div>
           
