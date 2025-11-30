@@ -85,7 +85,7 @@ const App: React.FC = () => {
             <select 
               value={currency} 
               onChange={(e) => setCurrency(e.target.value as Currency)}
-              className="bg-slate-100 dark:bg-slate-800 border-none rounded-md py-1.5 pl-3 pr-8 text-sm font-medium text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+              className="bg-slate-100 dark:bg-slate-800 border-none rounded-md py-1.5 pl-3 pr-8 text-sm font-bold text-slate-900 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
             >
               <option value={Currency.INR}>INR (₹)</option>
               <option value={Currency.USD}>USD ($)</option>
@@ -172,7 +172,7 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 flex justify-between items-center text-sm border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                  <span className="text-slate-600 dark:text-slate-400 flex items-center gap-2 font-medium">
                     <Filter className="w-4 h-4" /> Est. Leads
                   </span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">{results.totalLeads.toLocaleString()}</span>
@@ -181,12 +181,12 @@ const App: React.FC = () => {
                 {/* Confirmation Slider */}
                 <div className="space-y-3">
                   <div className="flex justify-between items-end">
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                       <Users className="w-4 h-4 text-slate-400" />
                       Lead Confirmation
                     </label>
                     <div className="text-right">
-                       <span className="text-xs text-slate-400 block mb-0.5">Orders: {results.totalOrders}</span>
+                       <span className="text-xs text-slate-500 block mb-0.5 font-medium">Orders: {results.totalOrders}</span>
                        <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{inputs.confirmationPercentage}%</span>
                     </div>
                   </div>
@@ -203,12 +203,12 @@ const App: React.FC = () => {
                 {/* Delivered Slider */}
                 <div className="space-y-3">
                   <div className="flex justify-between items-end">
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                       <PackageCheck className="w-4 h-4 text-slate-400" />
                       Delivered Rate
                     </label>
                     <div className="text-right">
-                       <span className="text-xs text-slate-400 block mb-0.5">Delivered: {results.deliveredOrders}</span>
+                       <span className="text-xs text-slate-500 block mb-0.5 font-medium">Delivered: {results.deliveredOrders}</span>
                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{inputs.deliveredPercentage}%</span>
                     </div>
                   </div>
@@ -220,7 +220,7 @@ const App: React.FC = () => {
                     onChange={(e) => handleInputChange('deliveredPercentage', parseFloat(e.target.value))}
                     className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                   />
-                  <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500">
+                  <div className="flex justify-between text-xs text-slate-500 dark:text-slate-500 font-medium">
                     <span>RTO Rate: {100 - inputs.deliveredPercentage}%</span>
                   </div>
                 </div>

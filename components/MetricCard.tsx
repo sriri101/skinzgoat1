@@ -19,9 +19,9 @@ export const MetricCard: React.FC<MetricCardProps> = ({ label, value, trend, sub
         ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800' 
         : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700'
     }`}>
-      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">{label}</p>
       <p className={`mt-2 text-2xl font-bold ${valueColor}`}>{value}</p>
-      {subValue && <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{subValue}</p>}
+      {subValue && <p className="mt-1 text-xs text-slate-500 dark:text-slate-500 font-medium">{subValue}</p>}
     </div>
   );
 };
