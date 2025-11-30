@@ -1,0 +1,463 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { InputGroup } from './components/InputGroup';
+import { MetricCard } from './components/MetricCard';
+import { DonutChart } from './components/DonutChart';
+import { EmbedModal } from './components/EmbedModal';
+import { DEFAULT_INPUTS, DEFAULT_CURRENCY, CHART_COLORS } from './constants';
+import { calculateMetrics, formatCurrency, formatPercent } from './utils/calculations';
+import { analyzeProfitability } from './services/geminiService';
+import { CalculatorInputs, CalculatorResults, Currency, AIAnalysisResponse } from './types';
+import { BarChart2, TrendingUp, BrainCircuit, Moon, Sun, Filter, Users, PackageCheck, Code, Download } from 'lucide-react';
+
+const App: React.FC = () => {
+  const [inputs, setInputs] = useState<CalculatorInputs>(DEFAULT_INPUTS);
+  const [results, setResults] = useState<CalculatorResults>(calculateMetrics(DEFAULT_INPUTS));
+  const [currency, setCurrency] = useState<Currency>(DEFAULT_CURRENCY);
+  const [activeTab, setActiveTab] = useState<'input' | 'analysis'>('input');
+  const [darkMode, setDarkMode] = useState(false);
+  const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
+  
+  // AI State
+  const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResponse | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  // Dark Mode Toggle
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  // Update results when inputs change
+  useEffect(() => {
+    setResults(calculateMetrics(inputs));
+  }, [inputs]);
+
+  const handleInputChange = (field: keyof CalculatorInputs, value: number) => {
+    setInputs(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAnalyze = async () => {
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    try {
+      const response = await analyzeProfitability(inputs, results, currency);
+      setAiAnalysis(response);
+      setActiveTab('analysis');
+    } catch (e) {
+      setAnalysisError("Could not generate AI insights. Check API Key.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const costData = [
+    { name: 'Product Cost', value: results.totalCOGS },
+    { name: 'Shipping', value: results.totalShipping },
+    { name: 'Ads', value: results.totalAds },
+    { name: 'Misc', value: results.totalMisc },
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 pb-24 transition-colors duration-200">
+      <EmbedModal isOpen={isEmbedModalOpen} onClose={() => setIsEmbedModalOpen(false)} />
+      
+      {/* Header */}
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10 shadow-sm transition-colors duration-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="bg-indigo-600 p-2 rounded-lg">
+              <BarChart2 className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400">
+              COD Profit Calc
+            </h1>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <button
+               onClick={() => setIsEmbedModalOpen(true)}
+               className="flex items-center gap-2 text-sm font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors border border-indigo-200 dark:border-indigo-800"
+               title="Get Embed Code for Website"
+            >
+              <Code className="w-4 h-4" />
+              <span className="hidden md:inline">Get Widget Code</span>
+            </button>
+
+             <button 
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+
+            <select 
+              value={currency} 
+              onChange={(e) => setCurrency(e.target.value as Currency)}
+              className="bg-slate-100 dark:bg-slate-800 border-none rounded-md py-1.5 pl-3 pr-8 text-sm font-medium text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+            >
+              <option value={Currency.INR}>INR (₹)</option>
+              <option value={Currency.USD}>USD ($)</option>
+              <option value={Currency.EUR}>EUR (€)</option>
+              <option value={Currency.MAD}>MAD (MAD)</option>
+            </select>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Left Column: Inputs */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors duration-200">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="w-1 h-6 bg-indigo-500 rounded-full"></div>
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Unit Economics</h2>
+              </div>
+              
+              <div className="space-y-4">
+                <InputGroup 
+                  label="Selling Price" 
+                  value={inputs.sellingPrice} 
+                  onChange={(v) => handleInputChange('sellingPrice', v)} 
+                  prefix={currency}
+                />
+                <InputGroup 
+                  label="Product Cost (COGS)" 
+                  value={inputs.productCost} 
+                  onChange={(v) => handleInputChange('productCost', v)} 
+                  prefix={currency}
+                  helperText="Cost lost on all orders (Delivered & RTO)"
+                />
+                <div className="grid grid-cols-2 gap-4">
+                   <InputGroup 
+                    label="Fwd Shipping" 
+                    value={inputs.shippingForward} 
+                    onChange={(v) => handleInputChange('shippingForward', v)} 
+                    prefix={currency}
+                    helperText="Paid on delivered only"
+                  />
+                  <InputGroup 
+                    label="RTO Shipping" 
+                    value={inputs.shippingRTO} 
+                    onChange={(v) => handleInputChange('shippingRTO', v)} 
+                    prefix={currency}
+                    helperText="Charge on return"
+                  />
+                </div>
+                 <InputGroup 
+                  label="Misc / Packaging" 
+                  value={inputs.miscCost} 
+                  onChange={(v) => handleInputChange('miscCost', v)} 
+                  prefix={currency}
+                  helperText="Paid on all orders"
+                />
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors duration-200">
+               <div className="flex items-center gap-2 mb-6">
+                <div className="w-1 h-6 bg-rose-500 rounded-full"></div>
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Campaign Funnel</h2>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <InputGroup 
+                    label="Total Ad Spend" 
+                    value={inputs.totalAdSpend} 
+                    onChange={(v) => handleInputChange('totalAdSpend', v)} 
+                    prefix={currency}
+                    step={100}
+                  />
+                  <InputGroup 
+                    label="Cost Per Lead" 
+                    value={inputs.costPerLead} 
+                    onChange={(v) => handleInputChange('costPerLead', v)} 
+                    prefix={currency}
+                    step={1}
+                  />
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 flex justify-between items-center text-sm border border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <Filter className="w-4 h-4" /> Est. Leads
+                  </span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{results.totalLeads.toLocaleString()}</span>
+                </div>
+                
+                {/* Confirmation Slider */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-end">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <Users className="w-4 h-4 text-slate-400" />
+                      Lead Confirmation
+                    </label>
+                    <div className="text-right">
+                       <span className="text-xs text-slate-400 block mb-0.5">Orders: {results.totalOrders}</span>
+                       <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{inputs.confirmationPercentage}%</span>
+                    </div>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    value={inputs.confirmationPercentage} 
+                    onChange={(e) => handleInputChange('confirmationPercentage', parseFloat(e.target.value))}
+                    className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                  />
+                </div>
+
+                {/* Delivered Slider */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-end">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <PackageCheck className="w-4 h-4 text-slate-400" />
+                      Delivered Rate
+                    </label>
+                    <div className="text-right">
+                       <span className="text-xs text-slate-400 block mb-0.5">Delivered: {results.deliveredOrders}</span>
+                       <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{inputs.deliveredPercentage}%</span>
+                    </div>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    value={inputs.deliveredPercentage} 
+                    onChange={(e) => handleInputChange('deliveredPercentage', parseFloat(e.target.value))}
+                    className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                  />
+                  <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500">
+                    <span>RTO Rate: {100 - inputs.deliveredPercentage}%</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Results & Analysis */}
+          <div className="lg:col-span-7 space-y-6">
+            
+            {/* Tabs for Mobile/Desktop organization */}
+            <div className="flex space-x-1 rounded-xl bg-slate-200 dark:bg-slate-800 p-1 mb-4 transition-colors duration-200">
+              <button
+                onClick={() => setActiveTab('input')}
+                className={`w-full rounded-lg py-2.5 text-sm font-medium leading-5 ring-white ring-opacity-60 ring-offset-2 ring-offset-indigo-400 focus:outline-none focus:ring-2 transition-all ${
+                  activeTab === 'input'
+                    ? 'bg-white dark:bg-slate-600 text-indigo-700 dark:text-white shadow'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-white/[0.12] dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => setActiveTab('analysis')}
+                className={`w-full rounded-lg py-2.5 text-sm font-medium leading-5 ring-white ring-opacity-60 ring-offset-2 ring-offset-indigo-400 focus:outline-none focus:ring-2 transition-all ${
+                  activeTab === 'analysis'
+                    ? 'bg-white dark:bg-slate-600 text-indigo-700 dark:text-white shadow'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-white/[0.12] dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                 AI Insights
+              </button>
+            </div>
+
+            {activeTab === 'input' && (
+              <div className="space-y-6">
+                {/* Big Profit Card */}
+                <div className={`rounded-2xl p-6 text-white shadow-lg transition-colors duration-300 ${results.netProfit >= 0 ? 'bg-gradient-to-br from-emerald-500 to-teal-600 dark:from-emerald-600 dark:to-teal-700' : 'bg-gradient-to-br from-rose-500 to-red-600 dark:from-rose-600 dark:to-red-700'}`}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-emerald-50 opacity-90 font-medium">Net Profit / Loss</p>
+                      <h2 className="text-4xl md:text-5xl font-bold mt-2">
+                        {formatCurrency(results.netProfit, currency)}
+                      </h2>
+                    </div>
+                    <div className="text-right">
+                       <p className="text-emerald-50 opacity-90 font-medium">Net Margin</p>
+                       <p className="text-2xl font-bold mt-1">{formatPercent(results.netMargin)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-white/20 flex gap-6 text-sm font-medium opacity-90">
+                    <div>
+                      <span className="opacity-75 block text-xs">Total Revenue</span>
+                      {formatCurrency(results.revenue, currency)}
+                    </div>
+                    <div>
+                      <span className="opacity-75 block text-xs">Total Spend</span>
+                      {formatCurrency(results.totalCOGS + results.totalShipping + results.totalAds + results.totalMisc, currency)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Key Metrics Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <MetricCard 
+                    label="ROAS" 
+                    value={results.roas.toFixed(2) + 'x'} 
+                    subValue={`Target: ${results.breakEvenROAS.toFixed(2)}x (BE)`}
+                    trend={results.roas >= results.breakEvenROAS ? 'positive' : 'negative'}
+                  />
+                  <MetricCard 
+                    label="CPP (Cost/Order)" 
+                    value={formatCurrency(results.costPerPurchase, currency)} 
+                    highlight
+                  />
+                  <MetricCard 
+                    label="RTO Orders" 
+                    value={results.rtoOrders.toString()} 
+                    subValue={`Loss: ${formatCurrency(results.rtoOrders * (inputs.productCost + inputs.miscCost + inputs.shippingRTO), currency)}`}
+                    trend="negative"
+                  />
+                  <MetricCard 
+                    label="ROI" 
+                    value={formatPercent(results.roi)}
+                    trend={results.roi > 0 ? 'positive' : 'negative'}
+                  />
+                  <MetricCard 
+                    label="Total Shipping" 
+                    value={formatCurrency(results.totalShipping, currency)}
+                  />
+                  <MetricCard 
+                    label="Total Orders" 
+                    value={results.totalOrders.toString()}
+                    subValue={`${results.deliveredOrders} Delivered`}
+                  />
+                </div>
+
+                {/* Charts */}
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors duration-200">
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Cost Breakdown</h3>
+                  <div className="flex flex-col md:flex-row items-center gap-6">
+                    <div className="flex-1 w-full">
+                       <DonutChart data={costData} />
+                    </div>
+                    <div className="flex-1 space-y-3 w-full">
+                       {costData.map((item, idx) => (
+                         <div key={idx} className="flex justify-between items-center text-sm border-b border-slate-50 dark:border-slate-800 pb-2 last:border-0">
+                           <div className="flex items-center gap-2">
+                             <div className="w-3 h-3 rounded-full" style={{ 
+                               backgroundColor: 
+                                item.name === 'Product Cost' ? CHART_COLORS.cogs :
+                                item.name === 'Shipping' ? CHART_COLORS.shipping :
+                                item.name === 'Ads' ? CHART_COLORS.ads : CHART_COLORS.misc
+                             }}></div>
+                             <span className="text-slate-600 dark:text-slate-300">{item.name}</span>
+                           </div>
+                           <span className="font-semibold text-slate-900 dark:text-white">{formatCurrency(item.value, currency)}</span>
+                         </div>
+                       ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'analysis' && (
+              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 min-h-[400px] transition-colors duration-200">
+                {!aiAnalysis ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-12">
+                     <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-full">
+                       <BrainCircuit className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                     </div>
+                     <div className="max-w-md">
+                       <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Get AI-Powered Profit Analysis</h3>
+                       <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">
+                         Let our AI analyze your funnel (CPL, Confirmation, RTO) and suggest 3 actionable ways to increase your cash flow.
+                       </p>
+                     </div>
+                     <button
+                        onClick={handleAnalyze}
+                        disabled={isAnalyzing}
+                        className="mt-4 inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-full font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                     >
+                       {isAnalyzing ? (
+                         <>
+                           <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                           </svg>
+                           Analyzing...
+                         </>
+                       ) : (
+                         <>
+                           Analyze Profitability <TrendingUp className="w-4 h-4" />
+                         </>
+                       )}
+                     </button>
+                     {analysisError && (
+                       <p className="text-rose-500 text-sm bg-rose-50 dark:bg-rose-900/20 px-4 py-2 rounded-lg mt-4">{analysisError}</p>
+                     )}
+                  </div>
+                ) : (
+                  <div className="space-y-6 animate-in fade-in duration-500">
+                    <div className="flex justify-between items-center">
+                       <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                         <BrainCircuit className="w-6 h-6 text-indigo-600 dark:text-indigo-400" /> 
+                         AI Analysis
+                       </h3>
+                       <button onClick={handleAnalyze} className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">
+                         Refresh
+                       </button>
+                    </div>
+                    
+                    <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg p-5">
+                      <p className="text-indigo-900 dark:text-indigo-100 leading-relaxed font-medium">
+                        "{aiAnalysis.analysis}"
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-slate-800 dark:text-white text-lg">Recommended Actions</h4>
+                      <div className="grid gap-4">
+                        {aiAnalysis.tips.map((tip, idx) => (
+                          <div key={idx} className="flex gap-4 p-4 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex-shrink-0 w-8 h-8 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center font-bold text-sm">
+                              {idx + 1}
+                            </div>
+                            <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{tip}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+          </div>
+        </div>
+      </main>
+      
+      {/* Sticky footer for mobile primary action if needed, or simple copyright */}
+      <footer className="fixed bottom-0 w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-3 px-4 md:hidden transition-colors duration-200">
+        <div className="flex justify-between items-center text-sm font-medium">
+          <div>
+            <span className="text-slate-500 dark:text-slate-400 text-xs block">Net Profit</span>
+            <span className={results.netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>
+              {formatCurrency(results.netProfit, currency)}
+            </span>
+          </div>
+          <button 
+             onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setActiveTab('analysis');
+                if(!aiAnalysis) handleAnalyze();
+             }}
+             className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs"
+          >
+             Analyze Now
+          </button>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
