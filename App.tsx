@@ -3,11 +3,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { InputGroup } from './components/InputGroup';
 import { MetricCard } from './components/MetricCard';
 import { DonutChart } from './components/DonutChart';
+import { CashflowChart } from './components/CashflowChart';
+import { AdScheduleManager } from './components/AdScheduleManager';
+import { MiscExpenseManager } from './components/MiscExpenseManager';
+import { FixedExpenseManager } from './components/FixedExpenseManager';
 import { DEFAULT_INPUTS, DEFAULT_CURRENCY, CHART_COLORS } from './constants';
 import { calculateMetrics, calculateRequiredMetrics, formatCurrency, formatPercent } from './utils/calculations';
 import { analyzeProfitability } from './services/geminiService';
-import { CalculatorInputs, CalculatorResults, GoalMetrics, Currency, AIAnalysisResponse } from './types';
-import { BarChart2, TrendingUp, BrainCircuit, Moon, Sun, Filter, Users, PackageCheck, Target, AlertTriangle, PackagePlus } from 'lucide-react';
+import { CalculatorInputs, CalculatorResults, GoalMetrics, Currency, AIAnalysisResponse, AdScheduleEvent, MiscOneTimeCost, FixedCost } from './types';
+import { BarChart2, TrendingUp, BrainCircuit, Moon, Sun, Filter, Users, PackageCheck, Target, AlertTriangle, PackagePlus, Clock, Truck, Landmark, Wallet, Calendar, Calculator, Info, Settings2 } from 'lucide-react';
 
 const App: React.FC = () => {
   const [inputs, setInputs] = useState<CalculatorInputs>(DEFAULT_INPUTS);
@@ -16,6 +20,9 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'input' | 'analysis'>('input');
   const [darkMode, setDarkMode] = useState(false);
   
+  // Logistics Settings Toggle
+  const [showLogisticsSettings, setShowLogisticsSettings] = useState(false);
+
   // Goal Simulator State
   const [targetProfit, setTargetProfit] = useState<number>(1000);
   const [goalMetrics, setGoalMetrics] = useState<GoalMetrics | null>(null);
@@ -41,8 +48,30 @@ const App: React.FC = () => {
     setGoalMetrics(calculateRequiredMetrics(inputs, targetProfit));
   }, [inputs, targetProfit]);
 
-  const handleInputChange = (field: keyof CalculatorInputs, value: number) => {
+  const handleInputChange = (field: keyof CalculatorInputs, value: any) => {
     setInputs(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleTimelineChange = (field: keyof typeof inputs.logisticsTimeline, value: number) => {
+    setInputs(prev => ({
+      ...prev,
+      logisticsTimeline: {
+        ...prev.logisticsTimeline,
+        [field]: value
+      }
+    }));
+  };
+
+  const handleScheduleChange = (events: AdScheduleEvent[]) => {
+    setInputs(prev => ({ ...prev, adSchedule: events }));
+  };
+
+  const handleMiscExpensesChange = (expenses: MiscOneTimeCost[]) => {
+    setInputs(prev => ({ ...prev, miscOneTimeCosts: expenses }));
+  };
+
+  const handleFixedExpensesChange = (expenses: FixedCost[]) => {
+    setInputs(prev => ({ ...prev, fixedMonthlyCosts: expenses }));
   };
 
   const handleAnalyze = async () => {
@@ -64,7 +93,14 @@ const App: React.FC = () => {
     { name: 'Shipping', value: results.totalShipping },
     { name: 'Ads', value: results.totalAds },
     { name: 'Misc', value: results.totalMisc },
+    { name: 'Fixed Costs', value: results.totalFixedCosts },
+    { name: 'Extra Expenses', value: results.totalOneTimeMisc },
   ];
+  
+  // Calculated Days for Legend
+  const dayDispatch = inputs.logisticsTimeline.dispatchDelay;
+  const dayDelivered = dayDispatch + inputs.logisticsTimeline.deliveryTime;
+  const dayPaid = dayDelivered + inputs.logisticsTimeline.payoutDelay;
 
   return (
     <div className="h-[100dvh] flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-200 overflow-hidden">
@@ -154,6 +190,24 @@ const App: React.FC = () => {
                     prefix={currency}
                     helperText="Paid on all orders"
                   />
+                  
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                    {/* New Fixed Costs Manager */}
+                    <FixedExpenseManager 
+                       expenses={inputs.fixedMonthlyCosts}
+                       onChange={handleFixedExpensesChange}
+                       currency={currency}
+                       campaignDuration={inputs.budgetDuration || 1}
+                    />
+
+                    {/* Variable Daily Expenses Manager */}
+                    <MiscExpenseManager 
+                      expenses={inputs.miscOneTimeCosts} 
+                      onChange={handleMiscExpensesChange} 
+                      currency={currency}
+                      maxDays={inputs.budgetDuration}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -214,22 +268,70 @@ const App: React.FC = () => {
                 </div>
                 
                 <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <InputGroup 
-                      label="Total Ad Spend" 
-                      value={inputs.totalAdSpend} 
-                      onChange={(v) => handleInputChange('totalAdSpend', v)} 
-                      prefix={currency}
-                      step={100}
-                    />
-                    <InputGroup 
-                      label="Cost Per Lead" 
-                      value={inputs.costPerLead} 
-                      onChange={(v) => handleInputChange('costPerLead', v)} 
-                      prefix={currency}
-                      step={1}
-                    />
+                  {/* Budget Toggle Section */}
+                  <div className="space-y-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center justify-between">
+                       <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Budget Type</label>
+                       <div className="flex bg-slate-200 dark:bg-slate-700 rounded-lg p-1">
+                          <button
+                            onClick={() => handleInputChange('budgetType', 'daily')}
+                            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${inputs.budgetType === 'daily' ? 'bg-white dark:bg-slate-500 text-indigo-600 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                          >
+                            Daily
+                          </button>
+                          <button
+                            onClick={() => handleInputChange('budgetType', 'total')}
+                            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${inputs.budgetType === 'total' ? 'bg-white dark:bg-slate-500 text-indigo-600 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                          >
+                            Total
+                          </button>
+                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <InputGroup 
+                        label={inputs.budgetType === 'daily' ? "Daily Base" : "Total Budget"} 
+                        value={inputs.adSpendInput} 
+                        onChange={(v) => handleInputChange('adSpendInput', v)} 
+                        prefix={currency}
+                        step={100}
+                      />
+                       <InputGroup 
+                        label="Duration (Days)" 
+                        value={inputs.budgetDuration} 
+                        onChange={(v) => handleInputChange('budgetDuration', v)} 
+                        suffix="days"
+                        min={1}
+                        step={1}
+                      />
+                    </div>
+                    {inputs.budgetType === 'total' && (
+                       <div className="text-xs text-slate-500 dark:text-slate-400 text-right">
+                          Base Daily: {formatCurrency(inputs.adSpendInput / (inputs.budgetDuration || 1), currency)}
+                       </div>
+                    )}
+                    {inputs.budgetType === 'daily' && (
+                       <div className="text-xs text-slate-500 dark:text-slate-400 text-right">
+                          Base Total: {formatCurrency(inputs.adSpendInput * inputs.budgetDuration, currency)}
+                       </div>
+                    )}
                   </div>
+
+                  {/* Advanced Budget Scheduling */}
+                  <AdScheduleManager 
+                    events={inputs.adSchedule} 
+                    onChange={handleScheduleChange} 
+                    currency={currency}
+                    maxDays={inputs.budgetDuration}
+                  />
+
+                  <InputGroup 
+                    label="Cost Per Lead" 
+                    value={inputs.costPerLead} 
+                    onChange={(v) => handleInputChange('costPerLead', v)} 
+                    prefix={currency}
+                    step={1}
+                  />
 
                   <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 flex justify-between items-center text-sm border border-slate-100 dark:border-slate-800">
                     <span className="text-slate-600 dark:text-slate-400 flex items-center gap-2 font-medium">
@@ -339,8 +441,143 @@ const App: React.FC = () => {
                       </div>
                       <div>
                         <span className="opacity-75 block text-xs">Total Spend</span>
-                        {formatCurrency(results.totalCOGS + results.totalShipping + results.totalAds + results.totalMisc, currency)}
+                        {formatCurrency(results.totalCOGS + results.totalShipping + results.totalAds + results.totalMisc + results.totalFixedCosts + results.totalOneTimeMisc, currency)}
                       </div>
+                    </div>
+                  </div>
+
+                  {/* CASHFLOW CYCLE CARD */}
+                  <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors duration-200">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-2">
+                         <Clock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                         <h3 className="text-lg font-bold text-slate-800 dark:text-white">Cashflow & Logistics Cycle</h3>
+                      </div>
+                      <div className="flex gap-2">
+                        <button 
+                            onClick={() => setShowLogisticsSettings(!showLogisticsSettings)}
+                            className="p-1.5 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors rounded bg-slate-100 dark:bg-slate-800"
+                            title="Customize Timeline"
+                        >
+                            <Settings2 className="w-4 h-4" />
+                        </button>
+                        <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                            <Info className="w-3 h-3"/>
+                            <span>Simulation: {inputs.budgetDuration} Days</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Collapsible Timeline Settings */}
+                    {showLogisticsSettings && (
+                        <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 animate-in slide-in-from-top-2 duration-200">
+                            <h4 className="text-xs font-bold uppercase text-slate-500 mb-3 tracking-wider">Customize Cycle Timeline (Days)</h4>
+                            <div className="grid grid-cols-3 gap-4">
+                                <InputGroup 
+                                    label="Dispatch Delay" 
+                                    value={inputs.logisticsTimeline.dispatchDelay} 
+                                    onChange={(v) => handleTimelineChange('dispatchDelay', v)}
+                                    suffix="days"
+                                    min={0}
+                                />
+                                <InputGroup 
+                                    label="Transit Time" 
+                                    value={inputs.logisticsTimeline.deliveryTime} 
+                                    onChange={(v) => handleTimelineChange('deliveryTime', v)}
+                                    suffix="days"
+                                    min={1}
+                                />
+                                <InputGroup 
+                                    label="Payout Delay" 
+                                    value={inputs.logisticsTimeline.payoutDelay} 
+                                    onChange={(v) => handleTimelineChange('payoutDelay', v)}
+                                    suffix="days"
+                                    min={1}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Investment Analysis Grid */}
+                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                       <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Landmark className="w-4 h-4 text-indigo-500" />
+                            <span className="text-xs font-bold uppercase text-slate-500 tracking-wide">Investment Needed</span>
+                          </div>
+                          <p className="text-xl font-bold text-slate-900 dark:text-white">{formatCurrency(results.cashflow.workingCapitalRequired, currency)}</p>
+                          <p className="text-[10px] text-slate-500 mt-1">Total cash needed to sustain operations.</p>
+                       </div>
+                       
+                       <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                          <div className="flex items-center gap-2 mb-2">
+                            <TrendingUp className="w-4 h-4 text-emerald-500" />
+                            <span className="text-xs font-bold uppercase text-slate-500 tracking-wide">Self-Sustaining</span>
+                          </div>
+                          <p className="text-xl font-bold text-slate-900 dark:text-white">Day {results.cashflow.peakCapitalDay}</p>
+                          <p className="text-[10px] text-slate-500 mt-1">Balance stops dropping after this day.</p>
+                       </div>
+                       
+                       <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Calendar className="w-4 h-4 text-indigo-500" />
+                            <span className="text-xs font-bold uppercase text-slate-500 tracking-wide">Profitable By</span>
+                          </div>
+                          <p className="text-xl font-bold text-slate-900 dark:text-white">
+                             {results.cashflow.roiDay !== null ? `Day ${results.cashflow.roiDay}` : 'Never'}
+                          </p>
+                          <p className="text-[10px] text-slate-500 mt-1">Day you earn back all investment.</p>
+                       </div>
+                    </div>
+
+                    {/* New Cumulative Chart */}
+                    <div className="mb-6">
+                       <div className="flex justify-between items-end mb-2">
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cumulative Cash Balance</p>
+                          <p className="text-xs text-slate-400 italic">Drag slider to zoom</p>
+                       </div>
+                       <div className="bg-slate-50 dark:bg-slate-950/50 rounded-lg p-2 border border-slate-100 dark:border-slate-800">
+                         <CashflowChart 
+                            data={results.cashflow.dailyCashflow} 
+                            currency={currency} 
+                            isDarkMode={darkMode} 
+                            peakCapitalDay={results.cashflow.peakCapitalDay}
+                            roiDay={results.cashflow.roiDay}
+                         />
+                       </div>
+                    </div>
+
+                    {/* Unit Timeline (Legend) */}
+                    <div>
+                       <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Unit Logistics Cycle (Days)</p>
+                       <div className="grid grid-cols-4 gap-2 text-center relative">
+                          <div className="absolute top-3 left-0 right-0 h-0.5 bg-slate-200 dark:bg-slate-700 z-0 mx-8 hidden md:block"></div>
+                          
+                          <div className="relative z-10 flex flex-col items-center">
+                             <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-indigo-500 flex items-center justify-center shrink-0 mb-2">
+                               <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">0</span>
+                             </div>
+                             <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase">Confirm</span>
+                          </div>
+                          <div className="relative z-10 flex flex-col items-center">
+                             <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-amber-500 flex items-center justify-center shrink-0 mb-2">
+                               <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">{dayDispatch}</span>
+                             </div>
+                             <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase">Dispatch</span>
+                          </div>
+                          <div className="relative z-10 flex flex-col items-center">
+                             <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-400 flex items-center justify-center shrink-0 mb-2">
+                               <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">{dayDelivered}</span>
+                             </div>
+                             <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase">Delivered</span>
+                          </div>
+                          <div className="relative z-10 flex flex-col items-center">
+                             <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-emerald-500 flex items-center justify-center shrink-0 mb-2">
+                               <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">{dayPaid}</span>
+                             </div>
+                             <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase">Paid</span>
+                          </div>
+                       </div>
                     </div>
                   </div>
 
@@ -447,7 +684,10 @@ const App: React.FC = () => {
                                  backgroundColor: 
                                   item.name === 'Product Cost' ? CHART_COLORS.cogs :
                                   item.name === 'Shipping' ? CHART_COLORS.shipping :
-                                  item.name === 'Ads' ? CHART_COLORS.ads : CHART_COLORS.misc
+                                  item.name === 'Ads' ? CHART_COLORS.ads : 
+                                  item.name === 'Fixed Costs' ? CHART_COLORS.fixed :
+                                  item.name === 'Extra Expenses' ? CHART_COLORS.extras :
+                                  CHART_COLORS.misc
                                }}></div>
                                <span className="text-slate-600 dark:text-slate-300">{item.name}</span>
                              </div>

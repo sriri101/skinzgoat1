@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { CalculatorInputs, CalculatorResults, AIAnalysisResponse, Currency } from '../types';
 
@@ -27,7 +28,7 @@ export const analyzeProfitability = async (
     Currency: ${currency}
     
     FUNNEL INPUTS:
-    - Ad Spend: ${inputs.totalAdSpend}
+    - Ad Spend: ${results.totalAds}
     - Cost Per Lead (CPL): ${inputs.costPerLead}
     - Lead Confirmation Rate: ${inputs.confirmationPercentage}%
     - Total Leads: ${results.totalLeads}

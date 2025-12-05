@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { CHART_COLORS } from '../constants';
@@ -19,6 +20,8 @@ export const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
       case 'Shipping': return CHART_COLORS.shipping;
       case 'Ads': return CHART_COLORS.ads;
       case 'Misc': return CHART_COLORS.misc;
+      case 'Fixed Costs': return CHART_COLORS.fixed;
+      case 'Extra Expenses': return CHART_COLORS.extras;
       case 'Profit': return CHART_COLORS.profit;
       default: return '#cbd5e1';
     }
